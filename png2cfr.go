@@ -116,41 +116,19 @@ begin:
 	return cmds
 }
 
-func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("Usage: png2cfr <pngfile>")
-		return
-	}
-
-	imageFilePath := os.Args[1]
-
-	cmds := make([]string, 0)
+func scan(i_col, j_col []int, getcolor func(int, int) color.RGBA) string {
 	cm := NewColorMachine()
 
-	file, err := os.Open(imageFilePath)
-	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return
-	}
-	defer file.Close()
-
-	im, _, err := image.Decode(file)
-	if err != nil {
-		fmt.Println("Error decoding image:", err)
-		return
-	}
-
-	cmds = append(cmds, "RR")
-	bounds := im.Bounds()
+	cmds := make([]string, 0)
 	firstLetter := ""
 
-	for y := 0; y < bounds.Max.Y; y++ {
-		colors := make([]color.RGBA, 0, bounds.Max.X)
+	for _, i := range i_col {
+		colors := make([]color.RGBA, 0)
 
-		for x := 0; x < bounds.Max.X; x++ {
-			rgba := color.RGBAModel.Convert(im.At(x, y)).(color.RGBA)
+		for _, j := range j_col {
+			rgba := getcolor(i, j)
 
-			if y&1 == 1 {
+			if i&1 == 1 {
 				colors = append([]color.RGBA{rgba}, colors...)
 			} else {
 				colors = append(colors, rgba)
@@ -165,16 +143,73 @@ func main() {
 			}
 		}
 
-		if y&1 == 1 {
+		if i&1 == 1 {
 			firstLetter = "[RRR]"
 		} else {
 			firstLetter = "RR"
 		}
 
-		if y < bounds.Max.Y-1 {
-			cmds = append(cmds, firstLetter)
+		cmds = append(cmds, firstLetter)
+	}
+
+	return strings.Join(cmds[:len(cmds)-1], "")
+}
+
+func fill_map(start, end int) []int {
+	arr := make([]int, 0)
+
+	if start > end {
+		for i := start; i >= end; i -= 1 {
+			arr = append(arr, i)
+		}
+	} else {
+		for i := start; i < end; i += 1 {
+			arr = append(arr, i)
 		}
 	}
 
-	fmt.Println(compress(strings.Join(cmds, "")))
+	return arr
+}
+
+func main() {
+	if len(os.Args) != 2 {
+		fmt.Println("Usage: png2cfr <pngfile>")
+		return
+	}
+
+	imageFilePath := os.Args[1]
+
+	file, err := os.Open(imageFilePath)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	im, _, err := image.Decode(file)
+	if err != nil {
+		fmt.Println("Error decoding image:", err)
+		return
+	}
+
+	bounds := im.Bounds()
+
+	y_col := fill_map(bounds.Min.Y, bounds.Max.Y)
+	x_col := fill_map(bounds.Min.X, bounds.Max.X)
+
+	variant1 := compress("RR" + scan(y_col, x_col, func(y, x int) color.RGBA {
+		return color.RGBAModel.Convert(im.At(x, y)).(color.RGBA)
+	}))
+
+	y_col = fill_map(bounds.Max.Y-1, bounds.Min.Y)
+
+	variant2 := compress(scan(x_col, y_col, func(x, y int) color.RGBA {
+		return color.RGBAModel.Convert(im.At(x, y)).(color.RGBA)
+	}))
+
+    if len(variant2) > len(variant1) {
+        fmt.Println(variant1)
+    } else {
+        fmt.Println(variant2)
+    }
 }
