@@ -172,13 +172,13 @@ func fill_map(start, end int) []int {
 }
 
 func colorized_print(str string) {
-    max := 256
+	max := 256
 
-    if len(str) > max {
-        fmt.Printf("%s\x1B[31m%s\x1B[0m\n", str[0:max], str[max:])
-    } else {
-        fmt.Println(str)
-    }
+	if len(str) > max {
+		fmt.Printf("%s\x1B[31m%s\x1B[0m\n", str[0:max], str[max:])
+	} else {
+		fmt.Println(str)
+	}
 }
 
 func main() {
@@ -204,40 +204,39 @@ func main() {
 
 	bounds := im.Bounds()
 
-    variants := make([]string, 8)
+	variants := make([]string, 8)
 
 	y_0 := fill_map(bounds.Min.Y, bounds.Max.Y)
 	x_0 := fill_map(bounds.Min.X, bounds.Max.X)
-    y_m := fill_map(bounds.Max.Y-1, bounds.Min.Y)
-    x_m := fill_map(bounds.Max.X-1, bounds.Min.X)
+	y_m := fill_map(bounds.Max.Y-1, bounds.Min.Y)
+	x_m := fill_map(bounds.Max.X-1, bounds.Min.X)
 
-    _ = x_m
+	_ = x_m
 
-    x_y := func(x, y int) color.RGBA {
-        return color.RGBAModel.Convert(im.At(x, y)).(color.RGBA)
-    }
+	x_y := func(x, y int) color.RGBA {
+		return color.RGBAModel.Convert(im.At(x, y)).(color.RGBA)
+	}
 
-    y_x := func(y, x int) color.RGBA {
-        return color.RGBAModel.Convert(im.At(x, y)).(color.RGBA)
-    }
+	y_x := func(y, x int) color.RGBA {
+		return color.RGBAModel.Convert(im.At(x, y)).(color.RGBA)
+	}
 
 	variants[0] = compress("RR" + scan(y_0, x_0, y_x, 1, 1))
 	variants[1] = compress(scan(x_0, y_m, x_y, 1, 1))
-    variants[2] = compress("[RR]" + scan(x_0, y_0, x_y, 0, 1))
-    variants[3] = compress("RR" + scan(y_m, x_0, y_x, 0, 1))
-    variants[4] = compress("[RRR]" + scan(y_0, x_m, y_x, 0, 1))
-    variants[5] = compress("[RR]" + scan(x_m, y_0, x_y, 0, 0))
-    variants[6] = compress(scan(x_m, y_m, x_y, 0, 0))
-    variants[7] = compress("[RRR]" + scan(y_m, x_m, y_x, 1, 0))
+	variants[2] = compress("[RR]" + scan(x_0, y_0, x_y, 0, 1))
+	variants[3] = compress("RR" + scan(y_m, x_0, y_x, 0, 1))
+	variants[4] = compress("[RRR]" + scan(y_0, x_m, y_x, 0, 1))
+	variants[5] = compress("[RR]" + scan(x_m, y_0, x_y, 0, 0))
+	variants[6] = compress(scan(x_m, y_m, x_y, 0, 0))
+	variants[7] = compress("[RRR]" + scan(y_m, x_m, y_x, 1, 0))
 
+	min_len := 0
 
-    min_len := 0
-    
-    for i := range(variants) {
-        if len(variants[min_len]) > len(variants[i]) {
-            min_len = i
-        }
-    }
+	for i := range variants {
+		if len(variants[min_len]) > len(variants[i]) {
+			min_len = i
+		}
+	}
 
-    colorized_print(variants[min_len])
+	colorized_print(variants[min_len])
 }
