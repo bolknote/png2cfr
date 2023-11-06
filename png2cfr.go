@@ -171,6 +171,16 @@ func fill_map(start, end int) []int {
 	return arr
 }
 
+func colorized_print(str string) {
+    max := 256
+
+    if len(str) > max {
+        fmt.Printf("%s\x1B[31m%s\x1B[0m\n", str[0:max], str[max:])
+    } else {
+        fmt.Println(str)
+    }
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: png2cfr <pngfile>")
@@ -208,8 +218,8 @@ func main() {
 	}))
 
     if len(variant2) > len(variant1) {
-        fmt.Println(variant1)
+        colorized_print(variant1)
     } else {
-        fmt.Println(variant2)
+        colorized_print(variant2)
     }
 }
